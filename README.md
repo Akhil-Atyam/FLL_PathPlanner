@@ -6,8 +6,17 @@ Set up your interpreter.
 
 You will most likely get an error, here are the steps to fix them.
 
-![image](https://github.com/user-attachments/assets/da591335-8ce3-4e1a-b42f-0f51b086c623)
+Delete the venv folder
 
-Change the first line to your file path. 
+Run this in your terminal 
+
+python -m pip install --upgrade pip setuptools
+
+pip install Pillow
 
 Run main.py
+
+Whenever the game changes, change the fll_mat.png file to the file of whatever the years game is, or if you want a custom field. I reccomend 1200x700, but you may have to adjust it based on your display.
+
+# Tuning
+
