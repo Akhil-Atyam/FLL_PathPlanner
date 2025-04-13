@@ -20,3 +20,15 @@ Whenever the game changes, change the fll_mat.png file to the file of whatever t
 
 # Tuning
 
+First you want to set up the scripts and divide the length of your image in pixels by the real life length of your field in inches, set that as PIXELS_PER_INCH
+
+Next you want to get your robot and find the center distance between your wheels, and find the offset of that from the true center of your robot.
+
+You want to put this in your gui as your offset.
+
+You then want to measure your robot in whole, and make that your robot size, in inches.
+
+After that, set up your starting point in inches from the robots wheel center from the 0,0 point of your image.
+
+In the Spike Script, enter in your wheel circumfernce.
+
