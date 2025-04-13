@@ -1,5 +1,7 @@
 # FLL_PathPlanner
 
+# Setup
+
 Unpack this zip file and open it with pycharm, but keep the spike file separate. Open this in the spike app under spike prime.
 
 Set up your interpreter.
