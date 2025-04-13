@@ -1,6 +1,6 @@
 # FLL_PathPlanner
 
-Unpack this zip file and open it with pycharm, but keep the spike file seperate. Open this in the spike app under spike prime.
+Unpack this zip file and open it with pycharm, but keep the spike file separate. Open this in the spike app under spike prime.
 
 Set up your interpreter.
 
@@ -30,5 +30,29 @@ You then want to measure your robot in whole, and make that your robot size, in 
 
 After that, set up your starting point in inches from the robots wheel center from the 0,0 point of your image.
 
-In the Spike Script, enter in your wheel circumfernce.
+In the Spike Script, enter in your wheel circumfernce. Change the movement motors in the 3 functions to the movement motors in your robot. 
 
+You have now finisheed tuning, save your gui values however as they do not save.
+
+
+# Using the software.
+
+## GUI
+
+Once you have tuned and set your starting pose, click anywhere in the map to create an angle and distance. Click add turn step, and move your cursor to the direction you want to face for a turn in place (tank turn). Click add marker to add a message in the telemetry, so that you can know where to add your arm movements and such in your spike code, and click reset to restart everything.
+
+## Spike
+
+Once you have entered the spike software, things get very simple. For all of the movement, you will be using Advanced Gyro forward and Gyro Turn.
+
+Repeat the following steps for every mark you have made
+
+First, add a Gyro Turn block, the first input is the degrees from telemetry, the second input is speed of your choice.
+
+Second, if you have a Move block, add an Advanced Gyro Forward block, the first input is the distance from telemetry, the second input is speed of your choice.
+
+Throughout the code, you can add other motors such as arms and joints to complete your missions, or even waits, but simulation of these arent supported in the GUI, rather markers signify either a pause in code or arm movements.
+
+# Credits
+
+Written by Akhil Atyam, FRC 4188
