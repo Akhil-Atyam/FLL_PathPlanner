@@ -2,9 +2,8 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import math
 
-# === CONFIG ===
 MAT_IMAGE = "fll_mat.png"  # Replace with your image path
-PIXELS_PER_INCH = 16
+PIXELS_PER_INCH = 16 # Image size in px / image size in inches
 
 
 class PathPlanner:
@@ -25,15 +24,11 @@ class PathPlanner:
         self.canvas.pack()
         self.canvas.create_image(0, self.image.height, anchor=tk.SW, image=self.tk_image)
 
-        self.textbox = tk.Text(self.frame, width=30, height=15, bg="white", fg="black", font=("Courier", 10))
+        tk.Label(self.frame, text="Telemetry").pack()
+        self.textbox = tk.Text(self.frame, width=30, height=8, bg="white", fg="black", font=("Courier", 10))
         self.textbox.pack(padx=5, pady=2)
 
-        self.telemetry_entry = tk.Text(self.frame, height=5, width=30)
-        self.telemetry_entry.pack(pady=2)
-
-        self.load_button = tk.Button(self.frame, text="Load Telemetry", command=self.load_telemetry)
-        self.load_button.pack(pady=2)
-
+        tk.Label(self.frame, text="").pack()
         self.robot_length_var = tk.DoubleVar(value=2.0)
         self.robot_width_var = tk.DoubleVar(value=1.5)
         self.robot_offset_x_var = tk.DoubleVar(value=0.0)
@@ -75,8 +70,13 @@ class PathPlanner:
         self.clear_button = tk.Button(self.frame, text="Reset", command=self.reset)
         self.clear_button.pack(pady=2)
 
-        self.undo_button = tk.Button(self.frame, text="Undo", command=self.undo)
-        self.undo_button.pack(pady=2)
+        tk.Label(self.frame, text="").pack()
+        tk.Label(self.frame, text="Telemetry Loader").pack()
+        self.telemetry_entry = tk.Text(self.frame, height=5, width=30)
+        self.telemetry_entry.pack(pady=2)
+
+        self.load_button = tk.Button(self.frame, text="Load Telemetry", command=self.load_telemetry)
+        self.load_button.pack(pady=2)
 
         self.points = []
         self.robot_angle = 0
@@ -184,7 +184,6 @@ class PathPlanner:
             dy = y - y1
             distance_px = math.sqrt(dx ** 2 + dy ** 2)
             distance_in = distance_px / PIXELS_PER_INCH
-
             desired_angle = math.degrees(math.atan2(dy, dx))
             turn_angle = (desired_angle - self.robot_angle + 360) % 360
             if turn_angle > 180:
