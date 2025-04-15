@@ -245,16 +245,19 @@ class PathPlanner:
     def load_telemetry(self):
         text = self.telemetry_entry.get("1.0", tk.END).strip().splitlines()
         self.reset()
-
+        previous1 = "Drive"
         for line in text:
             line = line.strip()
             if line.startswith("Rotate"):
+                x1, y1 = self.robot_position
+                if previous1 == "Rotate":
+                    self.draw_robot(x1, y1, self.robot_angle)
                 angle = float(line.split()[1].replace("°", ""))
                 self.robot_angle = (self.robot_angle + angle) % 360
                 self.textbox.insert(tk.END, f"Rotate {angle:.1f}°\n")
                 self.history.append(('turn', angle))
-                x1, y1 = self.robot_position
-                self.draw_robot(x1, y1, self.robot_angle)
+
+                previous1 = "Rotate"
             elif line.startswith("Drive"):
                 distance = float(line.split()[1].replace("\"", ""))
                 dx = distance * PIXELS_PER_INCH * math.cos(math.radians(self.robot_angle))
@@ -270,6 +273,7 @@ class PathPlanner:
                                      (x1, self.image.height - y1, x2, self.image.height - y2), 0, distance))
                 self.robot_position = (x2, y2)
                 self.draw_robot(x2, y2, self.robot_angle)
+                previous1 = "Drive"
             elif line.startswith("MARKER"):
                 self.add_marker()
 
