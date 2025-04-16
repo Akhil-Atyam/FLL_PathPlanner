@@ -2,6 +2,8 @@
 
 # Setup
 
+Note: This is for raw code
+
 Unpack this zip file and open it with pycharm, but keep the spike file separate. Open this in the spike app under spike prime.
 
 Set up your interpreter.
@@ -19,6 +21,12 @@ pip install Pillow
 Run main.py
 
 Whenever the game changes, change the fll_mat.png file to the file of whatever the years game is, or if you want a custom field. I reccomend 1200x700, but you may have to adjust it based on your display.
+
+Note: This is the easier method I reccomend, but the code is not tweakable.
+
+Go to releases, and pick a release of your choice, then run that release.
+
+Install the llsp3 file and open it in spike prime for robot code.
 
 # Tuning
 
