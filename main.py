@@ -1,11 +1,23 @@
 import tkinter as tk
+from tkinter import simpledialog
+
 from PIL import Image, ImageTk
 import math
 
 MAT_IMAGE = "fll_mat.png"  # Replace with your image path
 PIXELS_PER_INCH = 16 # Image size in px / image size in inches
 
+import sys
+import os
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        base_path = sys._MEIPASS  # PyInstaller temp folder
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 class PathPlanner:
     def __init__(self, root):
         self.root = root
@@ -17,7 +29,7 @@ class PathPlanner:
         self.canvas_frame = tk.Frame(root)
         self.canvas_frame.pack(side=tk.LEFT)
 
-        self.image = Image.open(MAT_IMAGE)
+        self.image = Image.open(resource_path("fll_mat.png"))
         self.tk_image = ImageTk.PhotoImage(self.image)
 
         self.canvas = tk.Canvas(self.canvas_frame, width=self.image.width, height=self.image.height)
@@ -62,6 +74,9 @@ class PathPlanner:
         self.set_pose_button.pack(pady=2)
 
         self.turn_button = tk.Button(self.frame, text="Add Turn Step", command=self.add_turn_step)
+        self.turn_button.pack(pady=2)
+
+        self.turn_button = tk.Button(self.frame, text="Add Move Step", command=self.move_only_step)
         self.turn_button.pack(pady=2)
 
         self.marker_button = tk.Button(self.frame, text="Add Marker", command=self.add_marker)
@@ -241,6 +256,22 @@ class PathPlanner:
             fill="orange"
         )
 
+    def move_only_step(self):
+        if self.robot_position:
+            distance = simpledialog.askfloat("Move Only", "Enter distance in inches (positive = forward, negative = back):")
+            if distance is not None:
+                angle_rad = math.radians(self.robot_angle)
+                dx = distance * PIXELS_PER_INCH * math.cos(angle_rad)
+                dy = distance * PIXELS_PER_INCH * math.sin(angle_rad)
+                x1, y1 = self.robot_position
+                x2 = x1 + dx
+                y2 = y1 + dy
+                self.canvas.create_line(x1, self.image.height - y1, x2, self.image.height - y2, fill='blue', width=2)
+                self.textbox.insert(tk.END, f"Drive {distance:.2f}\"\n")
+                self.history.append(('move', x2, y2, self.robot_angle,
+                                     (x1, self.image.height - y1, x2, self.image.height - y2), 0, distance))
+                self.robot_position = (x2, y2)
+                self.draw_robot(x2, y2, self.robot_angle)
     def load_telemetry(self):
         text = self.telemetry_entry.get("1.0", tk.END).strip().splitlines()
         self.reset()
