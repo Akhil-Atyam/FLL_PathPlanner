@@ -40,7 +40,7 @@ class PathPlanner:
         self.textbox = tk.Text(self.frame, width=30, height=8, bg="white", fg="black", font=("Courier", 10))
         self.textbox.pack(padx=5, pady=2)
 
-        tk.Label(self.frame, text="").pack()
+        #tk.Label(self.frame, text="").pack()
         self.robot_length_var = tk.DoubleVar(value=2.0)
         self.robot_width_var = tk.DoubleVar(value=1.5)
         self.robot_offset_x_var = tk.DoubleVar(value=0.0)
@@ -82,10 +82,13 @@ class PathPlanner:
         self.marker_button = tk.Button(self.frame, text="Add Marker", command=self.add_marker)
         self.marker_button.pack(pady=2)
 
+        self.undo_button = tk.Button(self.frame, text="Undo", command=self.undo)
+        self.undo_button.pack(pady=2)
+
         self.clear_button = tk.Button(self.frame, text="Reset", command=self.reset)
         self.clear_button.pack(pady=2)
 
-        tk.Label(self.frame, text="").pack()
+        #tk.Label(self.frame, text="").pack()
         tk.Label(self.frame, text="Telemetry Loader").pack()
         self.telemetry_entry = tk.Text(self.frame, height=5, width=30)
         self.telemetry_entry.pack(pady=2)
@@ -154,27 +157,42 @@ class PathPlanner:
             self.marker_count += 1
 
     def undo(self):
-        if self.history:
-            self.history.pop()
-            self.set_start_pose(*self.robot_position, self.robot_angle)
-            for action in self.history:
-                if action[0] == 'turn':
-                    self.robot_angle = (self.robot_angle + action[1]) % 360
-                    self.textbox.insert(tk.END, f"Rotate {action[1]:.1f}°\n")
-                elif action[0] == 'move':
-                    self.robot_position = (action[1], action[2])
-                    self.robot_angle = action[3]
-                    self.canvas.create_line(*action[4])
-                    self.textbox.insert(tk.END, f"Rotate {action[5]:.1f}°\n")
-                    self.textbox.insert(tk.END, f"Drive {action[6]:.2f}\"\n")
-                elif action[0] == 'marker':
-                    x, y = action[1], action[2]
-                    self.canvas.create_oval(x - 10, self.image.height - y - 10, x + 10, self.image.height - y + 10,
-                                            outline="green", width=2)
-                    self.textbox.insert(tk.END,
-                                        f"MARKER {self.marker_count} at ({x / PIXELS_PER_INCH:.2f}, {y / PIXELS_PER_INCH:.2f})\n")
+        text = self.textbox.get("1.0", tk.END).strip().splitlines()
+        self.reset()
+        previous1 = "Drive"
+        for line in text[:-1]:
+            line = line.strip()
+            if line.startswith("Rotate"):
+                x1, y1 = self.robot_position
+                if previous1 == "Rotate":
+                    self.draw_robot(x1, y1, self.robot_angle)
+                angle = float(line.split()[1].replace("°", ""))
+                self.robot_angle = (self.robot_angle + angle) % 360
+                self.textbox.insert(tk.END, f"Rotate {angle:.1f}°\n")
+                self.history.append(('turn', angle))
 
-            self.draw_robot(*self.robot_position, self.robot_angle)
+                previous1 = "Rotate"
+            elif line.startswith("Drive"):
+                distance = float(line.split()[1].replace("\"", ""))
+                dx = distance * PIXELS_PER_INCH * math.cos(math.radians(self.robot_angle))
+                dy = distance * PIXELS_PER_INCH * math.sin(math.radians(self.robot_angle))
+
+                x1, y1 = self.robot_position
+                x2 = x1 + dx
+                y2 = y1 + dy
+
+                self.canvas.create_line(x1, self.image.height - y1, x2, self.image.height - y2, fill='blue', width=2)
+                self.textbox.insert(tk.END, f"Drive {distance:.2f}\"\n")
+                self.history.append(('move', x2, y2, self.robot_angle,
+                                     (x1, self.image.height - y1, x2, self.image.height - y2), 0, distance))
+                self.robot_position = (x2, y2)
+                self.draw_robot(x2, y2, self.robot_angle)
+                previous1 = "Drive"
+            elif line.startswith("MARKER"):
+                self.add_marker()
+        if previous1 == "Rotate":
+            x1, y1 = self.robot_position
+            self.draw_robot(x1, y1, self.robot_angle)
 
     def add_point(self, event):
         x, y = event.x, self.image.height - event.y
@@ -272,14 +290,16 @@ class PathPlanner:
                                      (x1, self.image.height - y1, x2, self.image.height - y2), 0, distance))
                 self.robot_position = (x2, y2)
                 self.draw_robot(x2, y2, self.robot_angle)
+
     def load_telemetry(self):
         text = self.telemetry_entry.get("1.0", tk.END).strip().splitlines()
         self.reset()
         previous1 = "Drive"
-        for line in text:
+        for index, line in enumerate(text):  # Use enumerate to get both index and line
             line = line.strip()
             if line.startswith("Rotate"):
                 x1, y1 = self.robot_position
+                # Check if previous1 is "Rotate" or if this is the last line
                 if previous1 == "Rotate":
                     self.draw_robot(x1, y1, self.robot_angle)
                 angle = float(line.split()[1].replace("°", ""))
@@ -298,7 +318,7 @@ class PathPlanner:
                 y2 = y1 + dy
 
                 self.canvas.create_line(x1, self.image.height - y1, x2, self.image.height - y2, fill='blue', width=2)
-                self.textbox.insert(tk.END, f"Drive {distance:.2f}\"\n")
+                self.textbox.insert(tk.END, f"Drive {distance:.2f}\n")
                 self.history.append(('move', x2, y2, self.robot_angle,
                                      (x1, self.image.height - y1, x2, self.image.height - y2), 0, distance))
                 self.robot_position = (x2, y2)
@@ -306,6 +326,9 @@ class PathPlanner:
                 previous1 = "Drive"
             elif line.startswith("MARKER"):
                 self.add_marker()
+        if previous1 == "Rotate":
+            x1, y1 = self.robot_position
+            self.draw_robot(x1, y1, self.robot_angle)
 
 
 if __name__ == "__main__":
