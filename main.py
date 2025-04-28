@@ -11,8 +11,13 @@ import os
 # TODO: Important, teams that choose to use their own image, or teams that are playing previous years games must
 #  change the pixels per inch for tuning to be accurate.
 
-MAT_IMAGE = "fll_mat.png"  # Replace with your image path
-PIXELS_PER_INCH = 16  # Image size in px / image size in inches
+MAT_IMAGE = "masterpiece_table2.jpg"  # Replace with your image path
+
+PPIMST = 13.5  # Masterpiece field PPI
+PPISMG = 16  # Submerged field PPI
+PPIMST2 = 12.4731182796
+PIXELS_PER_INCH = PPIMST2  # Image size in px / image size in inches
+DBW = 5
 
 
 def resource_path(relative_path):
@@ -31,7 +36,7 @@ class PathPlanner:
         self.root.title("FLL Path Planner")
 
         self.defaultFont = font.nametofont("TkDefaultFont")
-        self.defaultFont.configure(family="Sans-serif", weight=font.NORMAL)
+        self.defaultFont.configure(family="Helvetica", weight=font.NORMAL)
 
         self.frame = tk.Frame(root)
         self.frame.pack(side=tk.LEFT, fill=tk.Y)
@@ -39,7 +44,7 @@ class PathPlanner:
         self.canvas_frame = tk.Frame(root)
         self.canvas_frame.pack(side=tk.LEFT)
 
-        self.image = Image.open(resource_path("fll_mat.png"))
+        self.image = Image.open(resource_path("masterpiece_table2.jpg"))
         self.tk_image = ImageTk.PhotoImage(self.image)
 
         self.canvas = tk.Canvas(self.canvas_frame, width=self.image.width, height=self.image.height)
@@ -54,28 +59,28 @@ class PathPlanner:
         self.regen_button.pack(pady=1)
 
         # tk.Label(self.frame, text="").pack()
-        self.robot_length_var = tk.DoubleVar(value=2.0)
-        self.robot_width_var = tk.DoubleVar(value=1.5)
+        self.robot_length_var = tk.DoubleVar(value=6.0)
+        self.robot_width_var = tk.DoubleVar(value=4.5)
         self.robot_offset_x_var = tk.DoubleVar(value=0.0)
         self.robot_offset_y_var = tk.DoubleVar(value=0.0)
 
         for label, var in [
             ("Robot Length (in)", self.robot_length_var),
             ("Robot Width (in)", self.robot_width_var),
-            ("Offset X (in)", self.robot_offset_x_var),
-            ("Offset Y (in)", self.robot_offset_y_var),
+            ("Offset Y (in)", self.robot_offset_x_var),
+            ("Offset X (in)", self.robot_offset_y_var),
         ]:
             tk.Label(self.frame, text=label).pack()
             tk.Entry(self.frame, textvariable=var).pack(pady=1)
 
         tk.Label(self.frame, text="Start X (in)").pack()
         self.start_x_entry = tk.Entry(self.frame)
-        self.start_x_entry.insert(0, "5")
+        self.start_x_entry.insert(0, "8.7")
         self.start_x_entry.pack(pady=1)
 
         tk.Label(self.frame, text="Start Y (in)").pack()
         self.start_y_entry = tk.Entry(self.frame)
-        self.start_y_entry.insert(0, "5")
+        self.start_y_entry.insert(0, "3")
         self.start_y_entry.pack(pady=1)
 
         tk.Label(self.frame, text="Start Angle (°)").pack()
@@ -92,13 +97,16 @@ class PathPlanner:
         self.turn_button = tk.Button(self.frame, text="Add Move Step", command=self.move_only_step)
         self.turn_button.pack(pady=1)
 
-        self.marker_button = tk.Button(self.frame, text="Add Marker", command=self.add_marker)
+        self.marker_button = tk.Button(self.frame, text="Add Marker", activebackground="green",
+                                       activeforeground="white", command=self.add_marker)
         self.marker_button.pack(pady=1)
 
-        self.undo_button = tk.Button(self.frame, text="Undo", command=self.undo)
+        self.undo_button = tk.Button(self.frame, text="Undo", activebackground="red", activeforeground="white",
+                                     command=self.undo)
         self.undo_button.pack(pady=1)
 
-        self.clear_button = tk.Button(self.frame, text="Reset", command=self.reset)
+        self.clear_button = tk.Button(self.frame, text="Reset", activebackground="red", activeforeground="white",
+                                      command=self.reset)
         self.clear_button.pack(pady=1)
 
         # tk.Label(self.frame, text="").pack()
@@ -119,8 +127,6 @@ class PathPlanner:
 
         self.canvas.bind("<Button-1>", self.add_point)
         self.update_start_pose()
-
-
 
     def update_start_pose(self):
         try:
@@ -184,7 +190,7 @@ class PathPlanner:
                 angle = float(line.split()[1].replace("°", ""))
                 angle = angle * -1
                 self.robot_angle = (self.robot_angle + angle) % 360
-                self.textbox.insert(tk.END, f"Rotate {angle*-1:.1f}°\n")
+                self.textbox.insert(tk.END, f"Rotate {angle * -1:.1f}°\n")
                 self.history.append(('turn', angle))
 
                 previous1 = "Rotate"
@@ -206,6 +212,7 @@ class PathPlanner:
                 previous1 = "Drive"
             elif line.startswith("MARKER"):
                 self.add_marker()
+
         if previous1 == "Rotate":
             x1, y1 = self.robot_position
             self.draw_robot(x1, y1, self.robot_angle)
@@ -223,7 +230,7 @@ class PathPlanner:
                 turn_angle -= 360
             self.robot_angle = desired_angle % 360
             self.points.append(("TURN", turn_angle))
-            self.textbox.insert(tk.END, f"Rotate {turn_angle*-1:.1f}°\n")
+            self.textbox.insert(tk.END, f"Rotate {turn_angle * -1:.1f}°\n")
             self.history.append(('turn', turn_angle))
             self.turn_mode = False
             self.draw_robot(rx, ry, self.robot_angle)
@@ -240,7 +247,7 @@ class PathPlanner:
             self.robot_angle = desired_angle % 360
 
             self.canvas.create_line(x1, self.image.height - y1, x, self.image.height - y, fill='blue', width=2)
-            self.textbox.insert(tk.END, f"Rotate {turn_angle*-1:.1f}°\n")
+            self.textbox.insert(tk.END, f"Rotate {turn_angle * -1:.1f}°\n")
             self.textbox.insert(tk.END, f"Drive {distance_in:.2f}\"\n")
 
             self.history.append(('move', x, y, self.robot_angle, (x1, self.image.height - y1, x, self.image.height - y),
@@ -261,7 +268,7 @@ class PathPlanner:
                 angle = float(line.split()[1].replace("°", ""))
                 angle = angle * -1
                 self.robot_angle = (self.robot_angle + angle) % 360
-                self.textbox.insert(tk.END, f"Rotate {angle*-1:.1f}°\n")
+                self.textbox.insert(tk.END, f"Rotate {angle * -1:.1f}°\n")
                 self.history.append(('turn', angle))
 
                 previous1 = "Rotate"
@@ -288,8 +295,6 @@ class PathPlanner:
             x1, y1 = self.robot_position
             self.draw_robot(x1, y1, self.robot_angle)
 
-
-
     def draw_robot(self, x, y, angle):
         if self.robot_box:
             self.canvas.delete(self.robot_box)
@@ -302,8 +307,8 @@ class PathPlanner:
         cos_a = math.cos(rad)
         sin_a = math.sin(rad)
 
-        ox = x + offset_x * cos_a - offset_y * sin_a
-        oy = y + offset_x * sin_a + offset_y * cos_a
+        ox = x + offset_x * cos_a - offset_y * sin_a * -1
+        oy = y + offset_x * sin_a + offset_y * cos_a * -1
 
         corners = [(-length / 2, -width / 2), (length / 2, -width / 2),
                    (length / 2, width / 2), (-length / 2, width / 2)]
@@ -350,6 +355,25 @@ class PathPlanner:
                 self.robot_position = (x2, y2)
                 self.draw_robot(x2, y2, self.robot_angle)
 
+    def arc(self):
+        if self.robot_position:
+            distance = simpledialog.askfloat("Arc",
+                                             "degrees")
+            if distance is not None:
+                angle_rad = math.radians(self.robot_angle)
+                dx = distance * PIXELS_PER_INCH * math.cos(angle_rad)
+                dy = distance * PIXELS_PER_INCH * math.sin(angle_rad)
+                x1, y1 = self.robot_position
+                x2 = x1 + dx
+                y2 = y1 + dy
+                self.canvas.create_line(x1, self.image.height - y1, x2, self.image.height - y2, fill='blue', width=2)
+                #self.canvas.create_arc()
+                self.textbox.insert(tk.END, f"Drive {distance:.2f}\"\n")
+                self.history.append(('move', x2, y2, self.robot_angle,
+                                     (x1, self.image.height - y1, x2, self.image.height - y2), 0, distance))
+                self.robot_position = (x2, y2)
+                self.draw_robot(x2, y2, self.robot_angle)
+
     def load_telemetry(self):
         text = self.telemetry_entry.get("1.0", tk.END).strip().splitlines()
 
@@ -365,7 +389,7 @@ class PathPlanner:
                 angle = float(line.split()[1].replace("°", ""))
                 angle = angle * -1
                 self.robot_angle = (self.robot_angle + angle) % 360
-                self.textbox.insert(tk.END, f"Rotate {angle*-1:.1f}°\n")
+                self.textbox.insert(tk.END, f"Rotate {angle * -1:.1f}°\n")
                 self.history.append(('turn', angle))
 
                 previous1 = "Rotate"
