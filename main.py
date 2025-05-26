@@ -19,7 +19,6 @@ PPIMST2 = 12.4731182796
 PIXELS_PER_INCH = PPIMST2  # Image size in px / image size in inches
 DBW = 5
 
-
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
